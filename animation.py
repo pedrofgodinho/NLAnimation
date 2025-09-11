@@ -54,19 +54,21 @@ class Part1(Scene):
         king_text = self.text_map["King"]
         queen_text = self.text_map["Queen"]
         
-        connection_line = DashedLine(
+        connection_line = Line(
             king_text.get_bottom(), 
             queen_text.get_top(), 
-            color=BLUE_C,
+            color=YELLOW,
             stroke_width=5
         )
         
         self.play(
             Indicate(king_text, color=YELLOW, scale_factor=1.2),
             Indicate(queen_text, color=YELLOW, scale_factor=1.2),
-            Create(connection_line),
+            ShowPassingFlash(connection_line, time_width=0.4, run_time=1.5),
             run_time=2
         )
+
+        # self.add(connection_line) 
         self.wait(1)
         
         question_mark = Text("?", font_size=144, color=YELLOW)
@@ -75,18 +77,23 @@ class Part1(Scene):
         other_words = VGroup(*[m for k, m in self.text_map.items() if k not in ["King", "Queen"]])
         self.play(
             FadeOut(other_words),
-            FadeOut(king_text),
-            FadeOut(queen_text)
+            # FadeOut(king_text),
+            # FadeOut(queen_text)
         )
         
-        self.play(Transform(connection_line, question_mark), run_time=1.5)
+        # EDIT: Switched to ReplacementTransform for a smoother visual effect
+        # when morphing two dissimilar shapes.
+        self.play(Transform(VGroup(king_text, queen_text), question_mark), run_time=1.5)
+        self.wait(3)
         self.play(Write(final_text))
         
         self.wait(2)
 
         # Fade out all remaining elements for a clean transition
+        # EDIT: After a ReplacementTransform, the new object (question_mark) is on screen,
+        # so we fade it out instead of the old one.
         self.play(
-            FadeOut(connection_line), # FIX: The connection_line is what remains on screen after being transformed.
+            FadeOut(question_mark),
             FadeOut(final_text)
         )
 
