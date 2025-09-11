@@ -327,7 +327,6 @@ class Part2(Scene):
         )
         self.play(FadeOut(mobjects_to_fade))
 
-
 class Part3(ThreeDScene):
     def construct(self):
         self.camera.background_color = BACKGROUND_COLOR
@@ -336,7 +335,7 @@ class Part3(ThreeDScene):
         axes = ThreeDAxes(
             x_range=[-5, 5, 1], y_range=[-5, 5, 1], z_range=[-5, 5, 1],
             x_length=14, y_length=10, z_length=8,
-            axis_config={"color": BLUE_C, "stroke_width": 2, "stroke_opacity":0.5}
+            axis_config={"color": BLUE_C, "stroke_width": 2, "stroke_opacity": 0.5}
         )
         # Note: In some Manim versions, you might just do `x_axis, y_axis, z_axis = axes`
         x_axis, y_axis, z_axis = axes.get_axes()
@@ -354,24 +353,53 @@ class Part3(ThreeDScene):
                 vec = vec * sphere_radius * np.random.uniform(0.7, 1.0)
                 
                 dot = Dot(point=vec, radius=0.03, color=WHITE, fill_opacity=0.7)
-                
-                dot.set_opacity(0)
+                dot.set_opacity(0) # Start transparent
                 
                 self.add_fixed_orientation_mobjects(dot)
-                
                 point_mobjects.append(dot)
 
         points = VGroup(*point_mobjects)
         
-        self.move_camera(phi=70 * DEGREES, theta=-45 * DEGREES, zoom=0.8, run_time=3, added_anims=[FadeIn(z_axis)])
+        # --- SMOOTHER CAMERA TRANSITION LOGIC ---
+
+        # 1. Define the desired final rotation rate and how long it should last.
+        final_rotation_rate = 0.13  # The desired panning speed in rad/s
+        rotation_wait_time = 8.0      # How long the panning should last
+
+        # 2. To make the transition seamless, the initial camera sweep needs to
+        #    end with the same angular velocity as the final rotation.
+        #    We calculate the required duration for the initial sweep to achieve this.
+        delta_theta = (-45 * DEGREES) - self.camera.get_theta()
+        initial_move_duration = abs(delta_theta / final_rotation_rate)
+
+        # 3. Perform the initial camera move from the 2D-like view to the 3D view.
+        #    We use rate_func=linear so the camera moves at a constant speed.
+        #    This speed now perfectly matches the subsequent panning speed.
+        self.move_camera(
+            phi=70 * DEGREES, 
+            theta=-45 * DEGREES, 
+            zoom=0.8, 
+            run_time=initial_move_duration, 
+            added_anims=[FadeIn(z_axis)],
+            rate_func=linear  # Use linear for constant speed, no slow-down at the end
+        )
         
+        # 4. Immediately begin the ambient rotation at the desired rate.
+        #    Because the speeds are matched from the previous step, there is no jerk or stop.
+        self.begin_ambient_camera_rotation(rate=final_rotation_rate)
+        
+        # 5. Fade in the points *while* the camera is now rotating.
+        #    The rotation happens in the background during this self.play() call.
         for dot in points:
             dot.set_opacity(0.7)
         self.play(
             FadeIn(points, scale=0.5, lag_ratio=0.01)
         )
-        self.begin_ambient_camera_rotation(rate=0.13)
-        self.wait(8)
+
+        # 6. Continue the rotation for the desired duration.
+        self.wait(rotation_wait_time)
+        
+        # --- END OF SMOOTHER CAMERA TRANSITION LOGIC ---
         
         self.stop_ambient_camera_rotation()
         self.play(
@@ -382,9 +410,8 @@ class Part3(ThreeDScene):
         self.move_camera(phi=0, theta=-PI/2, zoom=1.0, run_time=1)
         
         title = Text("Language as Vectors", font_size=60, color=WHITE)
-        subtitle = Text("Turning Meaning into Math", font_size=36, color=WHITE).next_to(title, DOWN, buff=0.4)
+        subtitle = Text("Turning Meanings into Math", font_size=36, color=WHITE).next_to(title, DOWN, buff=0.4)
         final_card = VGroup(title, subtitle)
 
         self.play(Write(final_card))
         self.wait(3)
-
