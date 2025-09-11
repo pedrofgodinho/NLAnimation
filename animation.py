@@ -1,7 +1,97 @@
 from manim import *
 import numpy as np
 
-class Part2_TheSolution(Scene):
+# A consistent, dark background for all scenes
+BACKGROUND_COLOR = "#1E1E1E"
+
+class Part1(Scene):
+    def construct(self):
+        self.camera.background_color = BACKGROUND_COLOR
+
+        self.animate_binary_code()
+        self.animate_word_cloud_transition()
+        self.animate_king_queen_question()
+
+    def animate_binary_code(self):
+        binary_string = "\n".join(
+            ["".join(np.random.choice(["0", "1"], 70)) for _ in range(40)]
+        )
+        self.binary_code = Text(binary_string, font="Monospace", font_size=16, fill_opacity=0.4)
+        
+        self.play(Write(self.binary_code), run_time=2.5)
+        self.wait(1)
+
+    def animate_word_cloud_transition(self):
+        words = ["King", "Queen", "Walks", "Running", "France", 
+                 "Paris", "Apple", "Software", "Cat", "Dog", "Piano", "Violin"]
+        
+        word_mobjects = VGroup()
+        self.text_map = {} 
+
+        for word_str in words:
+            text_obj = Text(word_str, font_size=32)
+            word_mobjects.add(text_obj)
+            self.text_map[word_str] = text_obj
+        
+        word_mobjects.arrange_in_grid(rows=3, cols=4, buff=2.0)
+        
+        for word in word_mobjects:
+            word.shift(np.random.rand(3) * 0.75)
+            word.scale(np.random.uniform(0.9, 1.3))
+            word.rotate(np.random.uniform(-PI/12, PI/12))
+            
+        self.play(
+            LaggedStart(
+                *[FadeIn(word, shift=UP*0.2) for word in word_mobjects],
+                lag_ratio=0.1
+            ),
+            FadeOut(self.binary_code, scale=0.8),
+            run_time=3
+        )
+        self.wait(1)
+
+    def animate_king_queen_question(self):
+        king_text = self.text_map["King"]
+        queen_text = self.text_map["Queen"]
+        
+        connection_line = DashedLine(
+            king_text.get_bottom(), 
+            queen_text.get_top(), 
+            color=BLUE_C,
+            stroke_width=5
+        )
+        
+        self.play(
+            Indicate(king_text, color=YELLOW, scale_factor=1.2),
+            Indicate(queen_text, color=YELLOW, scale_factor=1.2),
+            Create(connection_line),
+            run_time=2
+        )
+        self.wait(1)
+        
+        question_mark = Text("?", font_size=144, color=YELLOW)
+        final_text = Text("Meaning = Math?", font_size=48).next_to(question_mark, DOWN, buff=0.5)
+        
+        other_words = VGroup(*[m for k, m in self.text_map.items() if k not in ["King", "Queen"]])
+        self.play(
+            FadeOut(other_words),
+            FadeOut(king_text),
+            FadeOut(queen_text)
+        )
+        
+        self.play(Transform(connection_line, question_mark), run_time=1.5)
+        self.play(Write(final_text))
+        
+        self.wait(2)
+
+        # Fade out all remaining elements for a clean transition
+        self.play(
+            FadeOut(connection_line), # FIX: The connection_line is what remains on screen after being transformed.
+            FadeOut(final_text)
+        )
+
+
+class Part2(Scene):
     def animate_axes(self):
         # Axes
         self.axes = Axes(
@@ -73,7 +163,6 @@ class Part2_TheSolution(Scene):
         )
     
     def animate_equation_write(self):
-        # Create the initial equation as a class attribute
         self.equation = MathTex(
             r"\vec{King}", r"-", r"\vec{Man}", r"+", r"\vec{Woman}", r"=", r"?"
         ).to_edge(UP)
@@ -81,18 +170,14 @@ class Part2_TheSolution(Scene):
         self.play(Write(self.equation))
         self.wait(3)
 
-        # Create the second form of the equation
         second_equation = MathTex(
             r"\vec{King}", r"+", r"(", r"\vec{Woman}", r"-", r"\vec{Man}", r")", r"=", r"?"
         ).to_edge(UP)
 
-        # Transform the original self.equation into the second_equation
-        # This keeps self.equation on the screen, just with a new shape.
         self.play(Transform(self.equation, second_equation))
 
     def animate_vector_arithmetic(self):
-        # 1. Focus on (Woman - Man)
-        self.play(Indicate(self.equation[2:7])) # Highlight (Woman-Man) in equation
+        self.play(Indicate(self.equation[2:7])) 
         self.wait(1)
         self.play(
             Indicate(self.vector_objects["Woman"][0]),
@@ -100,16 +185,13 @@ class Part2_TheSolution(Scene):
         )
         self.wait(1)
 
-        # Create copies to animate
         woman_vec_copy = self.vector_objects["Woman"][0].copy().set_color(GREEN)
         man_vec_copy = self.vector_objects["Man"][0].copy().set_color(RED)
 
-        # Animate "Woman - Man" by adding a flipped "Man" vector to "Woman"
         self.play(man_vec_copy.animate.rotate(PI, about_point=man_vec_copy.get_start()))
         self.play(man_vec_copy.animate.shift(woman_vec_copy.get_end() - woman_vec_copy.get_start()))
         self.wait(1)
 
-        # Draw the resulting "gender difference" vector
         gender_diff_vec = Arrow(
             woman_vec_copy.get_start(), man_vec_copy.get_end(), 
             color=BLUE, buff=0
@@ -117,46 +199,33 @@ class Part2_TheSolution(Scene):
         self.play(GrowArrow(gender_diff_vec))
         self.wait(2)
         
-        # We don't need the intermediate vectors anymore
         self.play(FadeOut(woman_vec_copy, man_vec_copy))
 
-        # 2. Now, add this result to King
         self.play(Indicate(self.equation[0])) # Highlight King in equation
         self.play(Indicate(self.vector_objects["King"][0]))
         self.wait(1)
         
-        # Move the gender_diff_vec to the end of the King vector
         king_end_point = self.vector_objects["King"][0].get_end()
         self.play(gender_diff_vec.animate.shift(king_end_point - gender_diff_vec.get_start()))
         self.wait(2)
 
-        # 3. Show the final result
         final_result_vec = Arrow(self.axes.get_origin(), gender_diff_vec.get_end(), color=ORANGE, buff=0)
         self.play(GrowArrow(final_result_vec))
         self.wait(1)
 
-        # 4. Highlight that this matches Queen
         self.play(
             Flash(self.vector_objects["Queen"][1], color=ORANGE, flash_radius=0.5),
-            Indicate(self.vector_objects["Queen"][0], color=ORANGE)
         )
 
-        # 5. Update the equation to its final form
         final_equation = MathTex(
             r"\vec{King}", r"+", r"(", r"\vec{Woman}", r"-", r"\vec{Man}", r")", r"\approx", r"\vec{Queen}"
         ).to_edge(UP)
-        # This transform now works correctly because self.equation is the mobject on screen
         self.play(Transform(self.equation, final_equation))
         self.wait(3)
 
-        # 6. Clean up the animation vectors
         self.play(FadeOut(gender_diff_vec, final_result_vec))
 
     def construct(self):
-        """
-        This scene covers the second and third parts of the video plan.
-        It introduces word embeddings and then demonstrates vector arithmetic.
-        """
         self.camera.background_color = "#1E1E1E"
 
         self.scale_factor = 0.7
@@ -172,5 +241,60 @@ class Part2_TheSolution(Scene):
         self.wait(3)
 
         self.animate_vector_arithmetic()
+        self.wait(3)
+
+        # Fade out all remaining elements for a clean transition
+        mobjects_to_fade = VGroup(
+            self.axes,
+            self.y_label,
+            self.x_label_masculine,
+            self.x_label_feminine,
+            self.equation,
+            *self.vector_objects.values()
+        )
+        self.play(FadeOut(mobjects_to_fade))
+
+
+class Part3(ThreeDScene):
+    def construct(self):
+        self.camera.background_color = BACKGROUND_COLOR
+        self.set_camera_orientation(phi=0, theta=-PI/2)
+
+        axes = ThreeDAxes(
+            x_range=[-7, 7, 1], y_range=[-5, 5, 1], z_range=[-5, 5, 1],
+            x_length=14, y_length=10, z_length=8,
+            axis_config={"color": BLUE_C, "stroke_width": 2, "stroke_opacity":0.5}
+        )
+        self.play(FadeIn(axes))
+        self.wait()
+
+        points = VGroup(*[
+            Dot(
+                point=[np.random.uniform(-7, 7), np.random.uniform(-5, 5), np.random.uniform(-4, 4)],
+                radius=0.04, color=WHITE, fill_opacity=0.6
+            ) for _ in range(300)
+        ])
+        
+        self.move_camera(phi=70 * DEGREES, theta=-45 * DEGREES, zoom=0.8, run_time=3)
+        
+        self.play(
+            FadeIn(points, scale=0.5, lag_ratio=0.01)
+        )
+        self.begin_ambient_camera_rotation(rate=0.1)
+        self.wait(1)
+        
+        self.stop_ambient_camera_rotation()
+        self.play(
+            FadeOut(points),
+            FadeOut(axes)
+        )
+
+        self.move_camera(phi=0, theta=-PI/2, zoom=1.0, run_time=1)
+        
+        title = Text("Languages as Vectors", font_size=60)
+        subtitle = Text("Turning Meaning into Math", font_size=36).next_to(title, DOWN, buff=0.4)
+        final_card = VGroup(title, subtitle)
+
+        self.play(Write(final_card))
         self.wait(3)
 
