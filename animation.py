@@ -16,7 +16,7 @@ class Part1(Scene):
         self.animate_king_queen_question()
 
     def animate_binary_code(self):
-        ### 2.5s - Computer's understand numbers perfectly
+        ### (2.5s) Computer's understand numbers perfectly
         binary_string = "\n".join(
             ["".join(np.random.choice(["0", "1"], 70)) for _ in range(40)]
         )
@@ -92,7 +92,7 @@ class Part1(Scene):
         self.wait(3)
         self.play(Write(final_text))
         
-        self.wait(3)
+        self.wait(1)
 
         self.play(
             FadeOut(vgroup),
@@ -102,7 +102,7 @@ class Part1(Scene):
 
 class Part2(Scene):
     def animate_axes(self):
-        ### (7s) The solution is to represent words as vectors in a multi-dimensional space, a concept called word embedding.
+        ### (0-6s) The solution is to represent words as vectors in a multi-dimensional space, a concept called word embedding.
         # Axes
         self.axes = Axes(
             x_range=[-8, 8, 1],
@@ -153,12 +153,12 @@ class Part2(Scene):
             ),
         ])
 
-        # play all vectors without lagged start
-        ### (8s) Think of it like giving every single word a coordinate. In this space, words with similar meanings are placed close together.
+        ### (7-12s) Think of it like giving every single word a coordinate. In this space, words with similar meanings are placed close together.
         self.play([GrowArrow(vec) for vec in vectors], run_time=1.5)
         self.wait(8)
 
         self.play([FadeOut(vec) for vec in vectors], lag_ratio=0.5, run_time=1)
+        self.wait(1)
 
             
     def animate_labels(self):
@@ -181,6 +181,7 @@ class Part2(Scene):
             Write(self.x_label_masculine),
             Write(self.x_label_feminine),
         )
+        self.wait(2)
 
     
     def animate_vectors_drawing(self):
@@ -207,6 +208,7 @@ class Part2(Scene):
 
         ### (5s) A word like 'King' would have a high Royalty score and a masculine Gender score.
         # Animate initial vectors
+        self.wait(1)
         self.play(
             GrowArrow(self.vector_objects["Queen"][0]), FadeIn(self.vector_objects["Queen"][1]), Write(self.vector_objects["Queen"][2]),
             run_time=0.5
@@ -232,14 +234,13 @@ class Part2(Scene):
         ).to_edge(UP)
 
         self.play(Write(self.equation))
-        self.wait(7)
 
         ### (4s) Let's rewrite the equation to make what we're doing clearer.
+        self.wait(3)
 
         second_equation = MathTex(
             r"\vec{King}", r"+", r"(", r"\vec{Woman}", r"-", r"\vec{Man}", r")", r"=", r"?"
         ).to_edge(UP)
-        self.wait(4)
 
         self.play(Transform(self.equation, second_equation))
 
@@ -257,7 +258,7 @@ class Part2(Scene):
 
         self.play(man_vec_copy.animate.rotate(PI, about_point=man_vec_copy.get_start()))
         self.play(man_vec_copy.animate.shift(woman_vec_copy.get_end() - woman_vec_copy.get_start()))
-        self.wait(1)
+        # self.wait(1)
 
         gender_diff_vec = Arrow(
             woman_vec_copy.get_start(), man_vec_copy.get_end(), 
@@ -265,13 +266,13 @@ class Part2(Scene):
         )
         ### (5s) This vector, 'Woman - Man', is now a transformation that when applied to King...
         self.play(GrowArrow(gender_diff_vec))
-        self.wait(2)
+        # self.wait(2)
         
         self.play(FadeOut(woman_vec_copy, man_vec_copy))
 
-        self.play(Indicate(self.equation[0])) # Highlight King in equation
-        self.play(Indicate(self.vector_objects["King"][0]))
-        self.wait(1)
+        # self.play(Indicate(self.equation[0])) # Highlight King in equation
+        # self.play(Indicate(self.vector_objects["King"][0]))
+        # self.wait(1)
         
         king_end_point = self.vector_objects["King"][0].get_end()
         self.play(gender_diff_vec.animate.shift(king_end_point - gender_diff_vec.get_start()))
@@ -353,7 +354,7 @@ class Part3(ThreeDScene):
             FadeIn(points, scale=0.5, lag_ratio=0.01)
         )
         self.begin_ambient_camera_rotation(rate=0.1)
-        self.wait(1)
+        self.wait(8)
         
         self.stop_ambient_camera_rotation()
         self.play(
