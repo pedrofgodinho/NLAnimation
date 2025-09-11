@@ -334,7 +334,7 @@ class Part3(ThreeDScene):
         self.set_camera_orientation(phi=0, theta=-PI/2)
 
         axes = ThreeDAxes(
-            x_range=[-7, 7, 1], y_range=[-5, 5, 1], z_range=[-5, 5, 1],
+            x_range=[-5, 5, 1], y_range=[-5, 5, 1], z_range=[-5, 5, 1],
             x_length=14, y_length=10, z_length=8,
             axis_config={"color": BLUE_C, "stroke_width": 2, "stroke_opacity":0.5}
         )
@@ -370,7 +370,7 @@ class Part3(ThreeDScene):
         self.play(
             FadeIn(points, scale=0.5, lag_ratio=0.01)
         )
-        self.begin_ambient_camera_rotation(rate=0.1)
+        self.begin_ambient_camera_rotation(rate=0.13)
         self.wait(8)
         
         self.stop_ambient_camera_rotation()
