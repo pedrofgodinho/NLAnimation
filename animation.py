@@ -338,18 +338,35 @@ class Part3(ThreeDScene):
             x_length=14, y_length=10, z_length=8,
             axis_config={"color": BLUE_C, "stroke_width": 2, "stroke_opacity":0.5}
         )
-        self.play(FadeIn(axes))
+        # Note: In some Manim versions, you might just do `x_axis, y_axis, z_axis = axes`
+        x_axis, y_axis, z_axis = axes.get_axes()
+        ground_group = VGroup(x_axis, y_axis)
+        self.play(FadeIn(ground_group))
         self.wait()
 
-        points = VGroup(*[
-            Dot(
-                point=[np.random.uniform(-7, 7), np.random.uniform(-5, 5), np.random.uniform(-4, 4)],
-                radius=0.04, color=WHITE, fill_opacity=0.6
-            ) for _ in range(300)
-        ])
+        sphere_radius = 4.5
+
+        point_mobjects = []
+        for _ in range(300):
+            vec = np.random.randn(3)
+            if np.linalg.norm(vec) > 0:
+                vec = vec / np.linalg.norm(vec)
+                vec = vec * sphere_radius * np.random.uniform(0.7, 1.0)
+                
+                dot = Dot(point=vec, radius=0.03, color=WHITE, fill_opacity=0.7)
+                
+                dot.set_opacity(0)
+                
+                self.add_fixed_orientation_mobjects(dot)
+                
+                point_mobjects.append(dot)
+
+        points = VGroup(*point_mobjects)
         
-        self.move_camera(phi=70 * DEGREES, theta=-45 * DEGREES, zoom=0.8, run_time=3)
+        self.move_camera(phi=70 * DEGREES, theta=-45 * DEGREES, zoom=0.8, run_time=3, added_anims=[FadeIn(z_axis)])
         
+        for dot in points:
+            dot.set_opacity(0.7)
         self.play(
             FadeIn(points, scale=0.5, lag_ratio=0.01)
         )
@@ -364,8 +381,8 @@ class Part3(ThreeDScene):
 
         self.move_camera(phi=0, theta=-PI/2, zoom=1.0, run_time=1)
         
-        title = Text("Languages as Vectors", font_size=60)
-        subtitle = Text("Turning Meaning into Math", font_size=36).next_to(title, DOWN, buff=0.4)
+        title = Text("Language as Vectors", font_size=60, color=WHITE)
+        subtitle = Text("Turning Meaning into Math", font_size=36, color=WHITE).next_to(title, DOWN, buff=0.4)
         final_card = VGroup(title, subtitle)
 
         self.play(Write(final_card))
