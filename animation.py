@@ -4,6 +4,9 @@ import numpy as np
 # A consistent, dark background for all scenes
 BACKGROUND_COLOR = "#1E1E1E"
 
+# Seed RNG
+np.random.seed(42)
+
 class Part1(Scene):
     def construct(self):
         self.camera.background_color = BACKGROUND_COLOR
@@ -13,6 +16,7 @@ class Part1(Scene):
         self.animate_king_queen_question()
 
     def animate_binary_code(self):
+        ### 2.5s - Computer's understand numbers perfectly
         binary_string = "\n".join(
             ["".join(np.random.choice(["0", "1"], 70)) for _ in range(40)]
         )
@@ -22,6 +26,7 @@ class Part1(Scene):
         self.wait(1)
 
     def animate_word_cloud_transition(self):
+        ### (4s) But language? It's messy, subjective, and full of context.
         words = ["King", "Queen", "Walks", "Running", "France", 
                  "Paris", "Apple", "Software", "Cat", "Dog", "Piano", "Violin"]
         
@@ -51,12 +56,14 @@ class Part1(Scene):
         self.wait(1)
 
     def animate_king_queen_question(self):
+        ### (7s) How can we teach a machine that words like 'King' and 'Queen' are related, but also different?
+
         king_text = self.text_map["King"]
         queen_text = self.text_map["Queen"]
         
         connection_line = Line(
-            king_text.get_bottom(), 
-            queen_text.get_top(), 
+            king_text.get_right() + (RIGHT * 0.1), 
+            queen_text.get_left() + (LEFT * 0.2), # The Q is wider 
             color=YELLOW,
             stroke_width=5
         )
@@ -64,42 +71,38 @@ class Part1(Scene):
         self.play(
             Indicate(king_text, color=YELLOW, scale_factor=1.2),
             Indicate(queen_text, color=YELLOW, scale_factor=1.2),
-            ShowPassingFlash(connection_line, time_width=0.4, run_time=1.5),
+            ShowPassingFlash(connection_line, time_width=0.4, run_time=1),
             run_time=2
         )
 
-        # self.add(connection_line) 
-        self.wait(1)
+        self.wait(2)
         
         question_mark = Text("?", font_size=144, color=YELLOW)
         final_text = Text("Meaning = Math?", font_size=48).next_to(question_mark, DOWN, buff=0.5)
+
+        vgroup = VGroup(king_text, queen_text)
         
         other_words = VGroup(*[m for k, m in self.text_map.items() if k not in ["King", "Queen"]])
         self.play(
             FadeOut(other_words),
-            # FadeOut(king_text),
-            # FadeOut(queen_text)
         )
         
-        # EDIT: Switched to ReplacementTransform for a smoother visual effect
-        # when morphing two dissimilar shapes.
-        self.play(Transform(VGroup(king_text, queen_text), question_mark), run_time=1.5)
+        ### (3s) What if we could turn meaning into math?
+        self.play(Transform(vgroup, question_mark), run_time=1.5)
         self.wait(3)
         self.play(Write(final_text))
         
-        self.wait(2)
+        self.wait(3)
 
-        # Fade out all remaining elements for a clean transition
-        # EDIT: After a ReplacementTransform, the new object (question_mark) is on screen,
-        # so we fade it out instead of the old one.
         self.play(
-            FadeOut(question_mark),
+            FadeOut(vgroup),
             FadeOut(final_text)
         )
 
 
 class Part2(Scene):
     def animate_axes(self):
+        ### (7s) The solution is to represent words as vectors in a multi-dimensional space, a concept called word embedding.
         # Axes
         self.axes = Axes(
             x_range=[-8, 8, 1],
@@ -109,6 +112,57 @@ class Part2(Scene):
             axis_config={"color": BLUE},
         ).shift(self.graph_shift)
 
+        self.play(Create(self.axes), run_time=2)
+
+        # Show some random vectors to illustrate the space
+        vectors = VGroup(*[
+            Arrow(
+                self.axes.get_origin(), 
+                np.array([
+                    -2, 2, 0
+                ]) * self.scale_factor + self.graph_shift,
+                color=WHITE, buff=0
+            ),
+            Arrow(
+                self.axes.get_origin(), 
+                np.array([
+                    3, -1, 0
+                ]) * self.scale_factor + self.graph_shift,
+                color=WHITE, buff=0
+            ),
+            Arrow(
+                self.axes.get_origin(), 
+                np.array([
+                    -4, -2, 0
+                ]) * self.scale_factor + self.graph_shift,
+                color=WHITE, buff=0
+            ),
+            Arrow(
+                self.axes.get_origin(), 
+                np.array([
+                    1, 3, 0
+                ]) * self.scale_factor + self.graph_shift,
+                color=WHITE, buff=0
+            ),
+            Arrow(
+                self.axes.get_origin(), 
+                np.array([
+                    5, 1, 0
+                ]) * self.scale_factor + self.graph_shift,
+                color=WHITE, buff=0
+            ),
+        ])
+
+        # play all vectors without lagged start
+        ### (8s) Think of it like giving every single word a coordinate. In this space, words with similar meanings are placed close together.
+        self.play([GrowArrow(vec) for vec in vectors], run_time=1.5)
+        self.wait(8)
+
+        self.play([FadeOut(vec) for vec in vectors], lag_ratio=0.5, run_time=1)
+
+            
+    def animate_labels(self):
+        ### (6s) Let's simplify this. Let's label the vertical axis 'Royalty' and the horizontal axis 'Gender'.
         # Labels
         self.y_label = self.axes.get_y_axis_label(
             Text("Royalty", font_size=36 * self.scale_factor, color=WHITE), 
@@ -122,13 +176,12 @@ class Part2(Scene):
             Text("Feminine", font_size=36 * self.scale_factor, color=WHITE),
             edge=LEFT, direction=DOWN, buff=0.3 * self.scale_factor
         )
-
-        self.play(Create(self.axes), run_time=2)
         self.play(
             Write(self.y_label),
             Write(self.x_label_masculine),
             Write(self.x_label_feminine),
         )
+
     
     def animate_vectors_drawing(self):
         self.coords = {
@@ -152,17 +205,19 @@ class Part2(Scene):
                 Text(word, font_size=32 * self.scale_factor).next_to(coord, direction=label_direction, buff=0.1)
             )
 
+        ### (5s) A word like 'King' would have a high Royalty score and a masculine Gender score.
         # Animate initial vectors
         self.play(
             GrowArrow(self.vector_objects["Queen"][0]), FadeIn(self.vector_objects["Queen"][1]), Write(self.vector_objects["Queen"][2]),
-            run_time=1.5
+            run_time=0.5
         )
-        self.wait(1)
+        self.wait(5)
+        ### (5s) 'Queen' would be similar in Royalty, but with a feminine score.
         self.play(
             GrowArrow(self.vector_objects["King"][0]), FadeIn(self.vector_objects["King"][1]), Write(self.vector_objects["King"][2]),
-            run_time=1.5
+            run_time=0.5
         )
-        self.wait(1)
+        self.wait(5)
         self.play(
             GrowArrow(self.vector_objects["Woman"][0]), FadeIn(self.vector_objects["Woman"][1]), Write(self.vector_objects["Woman"][2]),
             GrowArrow(self.vector_objects["Man"][0]), FadeIn(self.vector_objects["Man"][1]), Write(self.vector_objects["Man"][2]),
@@ -170,16 +225,21 @@ class Part2(Scene):
         )
     
     def animate_equation_write(self):
+        ### (8s) This is where it gets amazing. Because words are now vectors, we can perform arithmetic on them. Watch this.
+
         self.equation = MathTex(
             r"\vec{King}", r"-", r"\vec{Man}", r"+", r"\vec{Woman}", r"=", r"?"
         ).to_edge(UP)
 
         self.play(Write(self.equation))
-        self.wait(3)
+        self.wait(7)
+
+        ### (4s) Let's rewrite the equation to make what we're doing clearer.
 
         second_equation = MathTex(
             r"\vec{King}", r"+", r"(", r"\vec{Woman}", r"-", r"\vec{Man}", r")", r"=", r"?"
         ).to_edge(UP)
+        self.wait(4)
 
         self.play(Transform(self.equation, second_equation))
 
@@ -203,6 +263,7 @@ class Part2(Scene):
             woman_vec_copy.get_start(), man_vec_copy.get_end(), 
             color=BLUE, buff=0
         )
+        ### (5s) This vector, 'Woman - Man', is now a transformation that when applied to King...
         self.play(GrowArrow(gender_diff_vec))
         self.wait(2)
         
@@ -220,6 +281,8 @@ class Part2(Scene):
         self.play(GrowArrow(final_result_vec))
         self.wait(1)
 
+        ### (3s) ...lands almost exactly where 'Queen' is located.
+        ### (4s) This is how a model can learn the relationship between these concepts.
         self.play(
             Flash(self.vector_objects["Queen"][1], color=ORANGE, flash_radius=0.5),
         )
@@ -239,7 +302,9 @@ class Part2(Scene):
         self.graph_shift = DOWN * 1.2
 
         self.animate_axes()
-        self.wait(3)
+        self.wait(1)
+        self.animate_labels()
+        self.wait(2)
 
         self.animate_vectors_drawing()
         self.wait(3)
