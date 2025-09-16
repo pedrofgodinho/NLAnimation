@@ -434,3 +434,34 @@ class Part3(ThreeDScene):
 
         self.play(Write(final_card))
         self.wait(3)
+
+        self.play(FadeOut(final_card), run_time=0.5)
+        self.wait(0.5)
+
+
+class Part4(Scene):
+    def construct(self):
+        self.camera.background_color = BACKGROUND_COLOR
+
+        title = Text("Citations", font_size=48)
+        citation = Text("Course Material for Information Processing and Retrieval", font_size=24)
+        citations = VGroup(
+            title,
+            citation
+        ).arrange(DOWN, buff=0.5, aligned_edge=RIGHT).to_corner(UR, buff=1)
+
+        # Group Members
+        member_names = VGroup(
+            Text("Pedro Godinho  ist193608", font_size=20),
+            Text("Tiago Camarinhas  ist196769", font_size=20),
+            Text("Vasco Rodrigues  ist100493", font_size=20)
+        ).arrange(DOWN, buff=0.2, aligned_edge=RIGHT).to_corner(DR, buff=0.5)
+
+        text = VGroup(citations, member_names)
+
+        self.play(Write(text), run_time=0.5)
+        self.wait(3)
+
+        self.play(FadeOut(text), run_time=0.5)
+        self.wait(0.5)
+
